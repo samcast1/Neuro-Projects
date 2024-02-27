@@ -1,0 +1,106 @@
+#!/bin/tcsh -f
+
+## Nudge and align before skullstripping
+## Skull-strip and normalize anat_ns_maskd+orig
+## creates 7 files: anat_ns_at.Xat.1D, +tlrc.BRIK & HEAD, _WarpDRive.log, .Xaff12.1D, anat+orig.BRIK.gz, anat+orig.HEAD
+
+## Preprocessing stream after converting pairs.nii to pairs+orig, nudging, 
+  # removing skull from anat, creating mask from anat_ns, and normalizing anat_ns+orig
+  # Creates fMRI data that's aligned to anat, motion-corrected, then tlrc'ed and masked.
+  
+
+foreach subj ( X007 X008 ) #X007 - X008 remaining, X001 - X006, X009 successful
+
+set subjdir=/mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/analysis/subjects/
+
+cd ${subjdir}/${subj}
+
+echo ">>>>> now processing ${subj} <<<<<"
+
+	echo
+
+	# Run fsl_anat, which basically does everything under the sun to the anatomical.
+	cd ${subjdir}/${subj}
+	fsl_anat --clobber -i ${subj}_anat.nii.gz -o ${subj}
+
+	# The rest of the script is just organizing the output of fsl_anat
+	cd ${subj}.anat
+
+	# This is now the base anatomical. In short, biascorr removes some low-frequency noise from the anatomical
+	# and improves standardization, etc.
+	echo "You rock, keep up the good work!"
+	cp T1_biascorr.nii.gz ../${subj}_anat_biascorr.nii.gz
+	
+		# Give FAST segmentations more-explicit names
+	mv T1_fast_pve_0.nii.gz T1_fast_pve_CSF.nii.gz
+	mv T1_fast_pve_1.nii.gz T1_fast_pve_GM.nii.gz
+	mv T1_fast_pve_2.nii.gz T1_fast_pve_WM.nii.gz
+
+	# Anatomical in MNI space using nonlinear warping
+	cp T1_to_MNI_nonlin.nii.gz ../${subj}_anat_biascorr_MNI.nii.gz
+	
+	# This is a mask of the brain the was created by taking the STD MNI152 brain mask
+	# and moving it into original space by the inverse of the nonlinear transform.
+	# The second file is the skull-stripped anatomical using this mask.
+	cp T1_biascorr_brain_mask.nii.gz ../${subj}_anat_biascorr_mask.nii.gz
+	cp T1_biascorr_brain.nii.gz ../${subj}_anat_biascorr_brain.nii.gz
+	
+	# Copy in the nonlinear transforms
+	cp MNI_to_T1_nonlin_field.nii.gz ../${subj}_MNI_to_T1_nonlin_field.nii.gz
+	cp T1_to_MNI_nonlin_field.nii.gz ../${subj}_T1_to_MNI_nonlin_field.nii.gz
+
+
+## creating MNI biascorr_brain (skull stripped), automask of MNI brain
+	echo "Let's WARP IT UP!"
+	cd ${subjdir}/${subj}
+applywarp --ref=${subj}_anat_biascorr_MNI.nii.gz --in=${subj}_anat_biascorr_brain.nii.gz --warp=${subj}_T1_to_MNI_nonlin_field.nii.gz --out=${subj}_anat_biascorr_brain_MNI.nii.gz --interp=sinc
+3dAutomask -dilate 0 -prefix ${subj}_automask.nii.gz ${subj}_anat_biascorr_brain_MNI.nii.gz
+
+#putting biascorr_brain in AFNI space so align_epi_anat can derive vr_motion files
+3dcalc -a ${subj}_anat_biascorr_brain.nii.gz -prefix ${subj}_anat_biascorr_brain+orig -datum float -expr 'a'
+
+##Create a temporary directory to do all the processing in
+		rm -r tmp
+		mkdir tmp
+	
+	##Copy in needed files
+		cp ${subj}_anat_biascorr_MNI.nii.gz tmp
+		cp ${subj}_T1_to_MNI_nonlin_field.nii.gz tmp
+		cp ${subj}.anat/T1_fast_pve_WM.nii.gz tmp
+		cp ${subj}.anat/T1_fast_pve_CSF.nii.gz tmp
+	
+		echo
+		echo "Creating WM and ventricular masks..."
+		cd tmp
+	
+	## Convert FAST output to MNI space #/usr/local/fsl/bin/
+		applywarp --interp=nn --in=T1_fast_pve_CSF --ref=${subj}_anat_biascorr_MNI.nii.gz -w ${subj}_T1_to_MNI_nonlin_field -o T1_fast_pve_CSF_MNI
+		applywarp --interp=nn --in=T1_fast_pve_WM --ref=${subj}_anat_biascorr_MNI.nii.gz -w ${subj}_T1_to_MNI_nonlin_field -o T1_fast_pve_WM_MNI
+
+	## Make two masks of the MNI brain: one w/ cerebrum and one w/ ventricles
+		3dresample -master T1_fast_pve_CSF_MNI.nii.gz -inset /usr/local/fsl/data/standard/MNI152_T1_2mm_strucseg.nii.gz -prefix MNI152_T1_3mm_strucseg.nii.gz
+		3dcalc -a MNI152_T1_3mm_strucseg.nii.gz -expr "amongst(a,1,5)" -prefix MNI152_T1_3mm_strucseg_cerebrum.nii.gz
+		3dcalc -a MNI152_T1_3mm_strucseg.nii.gz -expr "equals(a,5)" -prefix MNI152_T1_3mm_strucseg_ventricles.nii.gz
+	
+	## Make and trim the WM and ventricle masks
+ 		3dcalc -a MNI152_T1_3mm_strucseg_ventricles.nii.gz -b T1_fast_pve_CSF_MNI.nii.gz -expr "a*b*equals(b,1)" -prefix ${subj}_ventricles_all.nii.gz
+		3dcalc -a MNI152_T1_3mm_strucseg_cerebrum.nii.gz -b T1_fast_pve_WM_MNI.nii.gz -expr "a*b*equals(b,1)" -prefix ${subj}_WM_all.nii.gz
+	
+		3dcalc -a ${subj}_WM_all.nii.gz -b a+i -c a-i -d a+j -e a-j -f a+k -g a-k \
+			-expr 'a*(1-amongst(0,b,c,d,e,f,g))' -prefix ${subj}_wm_mask.nii.gz	
+	 
+		3dcalc -a ${subj}_ventricles_all.nii.gz -b a+i -c a-i -d a+j -e a-j -f a+k -g a-k \
+			-expr 'a*(1-amongst(0,b,c,d,e,f,g))' -prefix ${subj}_vent_mask.nii.gz
+	 
+		cd ..
+	 
+	## Save the masks and clean up
+		rm ${subj}_wm_mask.nii.gz ${subj}_vent_mask.nii.gz
+		cp tmp/${subj}_wm_mask.nii.gz .
+		cp tmp/${subj}_vent_mask.nii.gz .
+		rm -r tmp
+		
+	echo "Congrats! You level up!"
+end
+end
+end

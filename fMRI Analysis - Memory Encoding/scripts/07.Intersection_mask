@@ -1,0 +1,19 @@
+#!/bin/tcsh
+
+set subjdir=/mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/analysis/subjects/
+foreach subj ( X001 X002 X003 X004 X005 X006 X007 X008 X009 )
+
+cd ${subjdir}
+
+3dMean -prefix /mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/analysis/subjects/group_automask.nii.gz -mask_inter -verbose \
+/mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/analysis/subjects/X002/X002_automask.nii.gz \
+/mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/analysis/subjects/X003/X003_automask.nii.gz								\
+/mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/analysis/subjects/X004/X004_automask.nii.gz								\
+/mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/analysis/subjects/X005/X005_automask.nii.gz								\
+/mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/analysis/subjects/X006/X006_automask.nii.gz								\
+/mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/analysis/subjects/X007/X007_automask.nii.gz								\
+/mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/analysis/subjects/X008/X008_automask.nii.gz								\
+/mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/analysis/subjects/X009/X009_automask.nii.gz									
+
+
+end 

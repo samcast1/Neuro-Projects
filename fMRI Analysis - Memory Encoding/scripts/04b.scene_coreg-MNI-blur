@@ -1,0 +1,35 @@
+#!/bin/tcsh -f
+#completed, ran for X002- stopped? not checked!
+echo ">>>>> You're a great guy!<<<<<"
+set subjdir=/mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/analysis/subjects/
+
+foreach subj ( X004 X007 X008 X009 ) # rerunning for deoblique set, lost X009 bc looked awful
+
+cd ${subjdir}/${subj}
+
+echo " >>>>> now processing ${subj} <<<<<"
+
+## coregistration of EPI to anat 
+3dcalc -a ${subj}_scene_deob2_al.nii.gz'[0]' -prefix coreg_slice_scene_deob2.nii.gz -expr "a"
+flirt -ref ${subj}_anat_biascorr_brain.nii.gz -in coreg_slice_scene_deob2.nii.gz -out coreg_slice_e2a_scene_deob2.nii.gz -omat epi2anat_scene_deob2.mat -cost corratio -dof 6 -interp trilinear
+
+## applies transforms to standardize functional image and move it into MNI space
+echo ">>>>> applying transforms to ${subj} <<<<<"
+echo "(This will take a hot minute.)"
+applywarp --ref=${subj}_anat_biascorr_MNI.nii.gz --in=${subj}_scene_deob2_al.nii.gz --warp=${subj}_T1_to_MNI_nonlin_field.nii.gz --premat=epi2anat_scene_deob2.mat --out=${subj}_scene_deob2_al_MNI.nii.gz --interp=sinc
+
+echo ">>>>> masking functional image to brain for ${subj} <<<<<"
+
+3dcalc -prefix ${subj}_scene_deob2_al_MNI_brain.nii.gz \
+	-a ${subj}_scene_deob2_al_MNI.nii.gz \
+	-b ${subj}_automask.nii.gz \
+	-expr 'a*b/b'
+
+## blurring to an effective smoothness of FWHM 6 
+echo ">>>>> blurring ${subj} <<<<<"
+3dBlurToFWHM -FWHM 6 -mask ${subj}_automask.nii.gz -input ${subj}_scene_deob2_al_MNI_brain.nii.gz -prefix ${subj}_scene_deob2_al_MNI_b6.nii.gz
+
+chmod 777 *
+
+end 
+end 

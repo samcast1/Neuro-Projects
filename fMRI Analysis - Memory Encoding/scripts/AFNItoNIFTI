@@ -1,0 +1,14 @@
+#!/bin/tcsh 
+
+# convert BRIK and HEAD to nifti
+
+set subjdir=/mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/analysis/subjects/groupanalysis
+foreach subj ( X002 X003 X004 X005 X006 X007 X008 X009 )
+
+cd ${subjdir}
+
+3dAFNItoNIFTI ${subj}_scene_nuisreg_block+tlrc.BRIK
+
+end
+
+

@@ -1,0 +1,21 @@
+#!/bin/tcsh
+
+cd /mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/analysis/subjects/	
+
+#Smallest athr=0.001 ==> should have at least 10001
+
+3dClustSim -mask group_automask.nii.gz \
+	-nodec -fwhm 6 -NN 1 -iter 10000 \
+	-pthr .05 .01 .005 .001 \
+	-athr .05 .01 .005 .001 \
+	-NN 123 -prefix ../ClustSim_
+
+#will generate 3 .1D files: NN1, NN2, NN3. use NN1
+#is cluster correction the same in ReHo?
+	
+end
+
+	
+	
+	
+	

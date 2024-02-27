@@ -1,0 +1,51 @@
+#!/bin/tcsh -f 
+
+## Converts DICOM dataset to AFNI dataset 
+## Currently running for anatomical and scene encoding only
+
+foreach subj ( X001 X002 X003 ) # X004 X005 X006 X007 X008
+
+## set up home directory and subfolders 
+
+set basedir=/mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/fMRI_data/${subj}
+mkdir /mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/analysis/subjects/${subj}
+
+set subjdir=/mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/analysis/subjects/${subj}
+
+#mv ${base_dir}/REST_AP_MB4*_SBRef* ${base_dir}/REST_AP_MB4_SBRef
+
+echo "${basedir}"
+
+echo ">>>>> reconstructing anatomical for ${subj} <<<<<"
+
+cd ${basedir}/DW_T1w_MPR*
+to3d -spgr -session ${subjdir} -prefix ${subj}_anat.nii.gz -datum float *.dcm
+#mv ${base_dir}/${subj}_anat* ${subj_dir}
+
+
+# echo ">>>>> reconstructing resting state for ${subj} <<<<<"
+# cd ${base_dir}/REST_AP_MB4_25mmISO_1720ms*
+# to3d -session ${subj_dir} -prefix ${subj}_rest.nii.gz -datum float -skip_outliers -time:zt 64 175 1.72s zero *.dcm
+# 
+# echo ">>>>> reconstructing pairs for ${subj} <<<<<"
+# cd ${base_dir}/PairsEncode_HUSH_180_No_Grappa*
+# to3d -session ${subj_dir} -prefix ${subj}_pairs.nii.gz -datum float -skip_outliers -time:zt 30 180 1.99s zero *.dcm
+
+
+echo ">>>>> reconstructing scene for ${subj} <<<<<"
+cd ${basedir}/Scene_Encoding_No_Grappa*
+to3d -session ${subjdir} -prefix ${subj}_scene.nii.gz -datum float -skip_outliers -time:zt 30 338 2.00s zero *.dcm
+
+# 
+# echo ">>>>> reconstructing sternberg 1 for ${subj} <<<<<"
+# cd ${base_dir}/Sternberg_1_No_Grappa*
+# to3d -session ${subj_dir} -prefix ${subj}_stern_1.nii.gz -datum float -skip_outliers -time:zt 30 287 2.00s zero *.dcm
+# 
+# 
+# echo ">>>>> reconstructing sternberg 2 for ${subj} <<<<<"
+# cd ${base_dir}/Sternberg_2_No_Grappa*
+# to3d -session ${subj_dir} -prefix ${subj}_stern_2.nii.gz -datum float -skip_outliers -time:zt 30 287 2.00s zero *.dcm
+
+chmod 777 *
+
+end 

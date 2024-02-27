@@ -1,0 +1,41 @@
+#!/bin/tcsh -f
+
+## for subj X004- would removing 'deoblique off' work to realign the pairs task? 
+
+set subj_dir = /Users/sangeetanair/Documents/EPSCoR_fMRI-MEG/subjects
+
+foreach subj ( X009 ) 
+foreach part ( 1 2 )
+
+cd ${subj_dir}/${subj}
+
+## reference align_epi_anat: Saad, et al., NeuroImage (2009) 
+## slice time correction, moco, coreg/alignment (epi2anat), normalization (in 2) 
+## volreg_method: moco : volreg (6 param rigid body, alignments using fourier interpolation), 3dwarpdrive (12 parameter general affine), 3dallineate (12 param with LPA cost func)
+## (H1 is every 1st time point in each img acquisition- see pg 17 in notebook for diagram) 
+
+## also run align_epi_anat for each part of HUSH to acquire vr_motion (regression parameters)... in AFNI files because apparently that's the only way to save vr_motion
+
+3dcalc -a ${subj}_stern_${part}.nii.gz -prefix ${subj}_stern_${part}+orig -datum float -expr 'a'
+
+echo " >>>>> now running align_epi_anat.py ${subj}, ${part}<<<<<"
+
+align_epi_anat.py -epi ${subj}_stern_${part}+orig \
+	-anat ${subj}_anat_biascorr_brain+orig \
+	-anat_has_skull no \
+	-epi2anat -epi_base 90 -suffix _al.nii.gz -giant_move -cost lpa \
+	-volreg_method 3dvolreg -volreg_opts '-Fourier' -deoblique on \
+	-Allineate_opts '-warp shift_rotate' \
+	-tshift off \
+	-save_vr
+	
+mv ${subj}_stern_${part}_al.nii.gz_mat.aff12.1D ${subj}_stern_${part}_al_mat.aff12.1D
+mv ${subj}_stern_${part}_al.nii.gz_reg_mat.aff12.1D ${subj}_stern_${part}_al_reg_mat.aff12.1D
+
+mv ${subj}_anat_biascorr_brain_al.nii.gz_e2a_only_mat.aff12.1D  ${subj}_anat_biascorr_brain_al_e2a_only_mat.aff12.1D
+
+chmod 777 *
+
+end 
+end
+end

@@ -1,0 +1,47 @@
+#!/bin/tcsh -f
+
+#what are your variables of interest? What are your conditions?
+#Question here: does scene encoding result in increase/decreased neural activity in any regions compared to a baseline pattern recognition task?
+#More relevant Q: can successful encoding (indicated by retrieval data) be predicted by increased/decreased neural activation in any regions?
+
+set subjdir=/mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/analysis/subjects/
+
+foreach subj ( X004 X007 X008 X009 ) # X001 N/A, X003 - X008 remaining, X002 & X009 successful
+
+echo "NOW PROCESSING THIS GUY----> ** ${subj} ** <---"
+
+cd ${subjdir}/${subj}
+rm 3dDeconvolve.err
+
+3dDeconvolve -input ${subj}_scene_deob2_al_MNI_b6.nii.gz \
+	-polort A -float \
+	-num_stimts 14 \
+	-nfirst 0 \
+	-GOFORIT 5 \
+-stim_times 1 /mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/behavioral_data/${subj}/${subj}_stimtm/in.1D 'BLOCK(5,1)' -stim_label 1 in \
+-stim_times 2 /mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/behavioral_data/${subj}/${subj}_stimtm/out.1D 'BLOCK(5,1)' -stim_label 2 out \
+-stim_times 3 /mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/behavioral_data/${subj}/${subj}_stimtm/same.1D 'BLOCK(5,1)' -stim_label 3 same \
+-stim_times 4 /mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/behavioral_data/${subj}/${subj}_stimtm/diff.1D 'BLOCK(5,1)' -stim_label 4 diff \
+-stim_times 5 /mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/behavioral_data/${subj}/${subj}_stimtm/hit.1D 'BLOCK(5,1)' -stim_label 5 hit \
+-stim_times 6 /mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/behavioral_data/${subj}/${subj}_stimtm/miss.1D 'BLOCK(5,1)' -stim_label 6 miss \
+-stim_file 7 ${subjdir}/${subj}/${subj}_scene_deob2_vr_motion_demean.1D'[0]' -stim_base 7 -stim_label 7 roll \
+-stim_file 8 ${subjdir}/${subj}/${subj}_scene_deob2_vr_motion_demean.1D'[1]' -stim_base 8 -stim_label 8 pitch \
+-stim_file 9 ${subjdir}/${subj}/${subj}_scene_deob2_vr_motion_demean.1D'[2]' -stim_base 9 -stim_label 9 yaw \
+-stim_file 10 ${subjdir}/${subj}/${subj}_scene_deob2_vr_motion_demean.1D'[3]' -stim_base 10 -stim_label 10 dS \
+-stim_file 11 ${subjdir}/${subj}/${subj}_scene_deob2_vr_motion_demean.1D'[4]' -stim_base 11 -stim_label 11 dL \
+-stim_file 12 ${subjdir}/${subj}/${subj}_scene_deob2_vr_motion_demean.1D'[5]' -stim_base 12 -stim_label 12 dP  \
+-stim_file 13 ${subj}_scene_deob2_wm_regressor.1D'[0]' -stim_label 13 wm -stim_base 13 \
+-stim_file 14 ${subj}_scene_deob2_vent_regressor.1D'[0]' -stim_label 14 vent -stim_base 14 \
+\
+-rout -nobout \
+-num_glt 3 \
+-gltsym 'SYM: +hit -miss' -glt_label 1 hit-miss \
+-gltsym 'SYM: +in - out' -glt_label 2 in-out  \
+-gltsym 'SYM: +same -diff' -glt_label 3 same-diff \
+-fout -tout -x1D ${subj}_scene_deob2_decon_block.xmat.1D -xjpeg xmat_${subj}_scene_deob2.jpg \
+-fitts fitts_deob2.${subj} \
+-errts ${subj}_scene_deob2_al_MNI_b6_nuisreg.nii.gz \
+-bucket ${subjdir}/${subj}/${subj}_scene2_deob_nuisreg_block \
+
+end 
+end

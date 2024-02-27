@@ -1,0 +1,33 @@
+#!/bin/tcsh
+
+# This file makes the nuisance regressors: motion, WM, CSF, GS and all of their derivatives.
+
+set subjdir=/mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/analysis/subjects/
+
+foreach subj ( X004 X007 X008 X009 ) # X001 X002 X003 X004 X005 X006 X007 X008 X009 successful
+
+	echo
+	echo " >>>>> now processing ${subj} <<<<<"
+
+	cd ${subjdir}/${subj}
+
+		echo
+		echo "Creating nuisance regressors..."
+		# Extract signal for WM, ventricles and global signal regressors
+		3dmaskave -q -mask ${subj}_wm_mask.nii.gz ${subj}_scene_deob2_al_MNI_b6.nii.gz > ${subj}_scene_deob2_wm_regressor.1D
+		3dmaskave -q -mask ${subj}_vent_mask.nii.gz ${subj}_scene_deob2_al_MNI_b6.nii.gz > ${subj}_scene_deob2_vent_regressor.1D
+		3dmaskave -q -mask ${subj}_automask.nii.gz ${subj}_scene_deob2_al_MNI_b6.nii.gz > ${subj}_scene_deob2_gs_regressor.1D
+ 	
+	
+		# compute de-meaned motion parameters (maybe remove #overwrite function? *make copy of vr_motion before test out!
+		#compute derivative 
+		cd ${subjdir}/${subj}/
+		1d_tool.py -infile ${subj}_scene_deob2_vr_motion.1D -demean -write ${subj}_scene_deob2_vr_motion_demean.1D
+		1d_tool.py -infile ${subj}_scene_deob2_vr_motion.1D -derivative -demean -write ${subj}_scene_deob2_vr_motion_demean_deriv.1D
+		1d_tool.py -infile ${subj}_scene_deob2_wm_regressor.1D -derivative -write ${subj}_scene_deob2_wm_regressor_deriv.1D
+		1d_tool.py -infile ${subj}_scene_deob2_vent_regressor.1D -derivative -write ${subj}_scene_deob2_vent_regressor_deriv.1D
+		1d_tool.py -infile ${subj}_scene_deob2_gs_regressor.1D -derivative -write ${subj}_scene_deob2_gs_regressor_deriv.1D
+
+ 
+end
+

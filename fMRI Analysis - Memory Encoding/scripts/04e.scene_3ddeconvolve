@@ -1,0 +1,43 @@
+#This is for scene - pixel contrast
+#Question of interest: neural correlates of attention
+#Expected activation: ?????
+#I don't know what I'm doing.
+
+echo ">>>>>>>>>>>>> You may not know what you're doing, but you're a great guy <<<<<<<<<<<<<." 
+
+set subjdir=/mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/analysis/subjects/
+
+foreach subj ( X004 X007 X008 X009 ) # X002 X003 X004 X005 X006 X007 X008 X009 completed
+#X004, X008, X009 questionable
+
+echo "NOW PROCESSING THIS GUY----> ** ${subj} ** <---"
+
+cd ${subjdir}/${subj}
+rm 3dDeconvolve.err
+
+3dDeconvolve -input ${subj}_scene_deob2_al_MNI_b6.nii.gz \
+	-polort A -float \
+	-num_stimts 10 \
+	-nfirst 0 \
+	-GOFORIT 5 \
+-stim_times 1 /mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/behavioral_data/${subj}/${subj}_stimtm/scene.1D 'BLOCK(5,1)' -stim_label 1 scene \
+-stim_times 2 /mnt/c/Users/casti/Desktop/EPSCoR_Research/EPSCoR_REU/behavioral_data/${subj}/${subj}_stimtm/pixel.1D 'BLOCK(5,1)' -stim_label 2 pixel \
+-stim_file 3 ${subjdir}/${subj}/${subj}_scene_deob2_vr_motion_demean.1D'[0]' -stim_base 3 -stim_label 3 roll \
+-stim_file 4 ${subjdir}/${subj}/${subj}_scene_deob2_vr_motion_demean.1D'[1]' -stim_base 4 -stim_label 4 pitch \
+-stim_file 5 ${subjdir}/${subj}/${subj}_scene_deob2_vr_motion_demean.1D'[2]' -stim_base 5 -stim_label 5 yaw \
+-stim_file 6 ${subjdir}/${subj}/${subj}_scene_deob2_vr_motion_demean.1D'[3]' -stim_base 6 -stim_label 6 dS \
+-stim_file 7 ${subjdir}/${subj}/${subj}_scene_deob2_vr_motion_demean.1D'[4]' -stim_base 7 -stim_label 7 dL \
+-stim_file 8 ${subjdir}/${subj}/${subj}_scene_deob2_vr_motion_demean.1D'[5]' -stim_base 8 -stim_label 8 dP  \
+-stim_file 9 ${subj}_scene_deob2_wm_regressor.1D'[0]' -stim_label 9 wm -stim_base 9 \
+-stim_file 10 ${subj}_scene_deob2_vent_regressor.1D'[0]' -stim_label 10 vent -stim_base 10 \
+\
+-rout -nobout \
+-num_glt 1 \
+-gltsym 'SYM: +scene -pixel' -glt_label 1 scene-pixel \
+-fout -tout -x1D ${subj}_scene_deob2_attention_decon_block.xmat.1D -xjpeg xmat_${subj}_scene_deob2_attention.jpg \
+-fitts fitts_deob2.${subj} \
+-errts ${subj}_scene_deob2_al_MNI_b6_nuisreg.nii.gz \
+-bucket ${subjdir}/${subj}/${subj}_scene_deob2_attention_nuisreg_block \
+
+end 
+end
